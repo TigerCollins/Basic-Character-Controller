@@ -20,6 +20,8 @@ public class BasicMovementScript : MonoBehaviour
 
     [Header("Control Details")]
     [SerializeField]
+    private GameObject _playerAvatarObject;
+    [SerializeField]
     private ControlTypeEnum _controlType;
     public bool isPlayer = true;
     public float movementMultipler = 2;
@@ -29,6 +31,14 @@ public class BasicMovementScript : MonoBehaviour
     [SerializeField]
     private Vector2 _moveAxis; //debug purposes only
 
+    [Space(10)]
+
+    [Range(0,5)]
+    [SerializeField]
+    private float _rotationSpeed = .75f;
+    [SerializeField]
+    private Vector3 _rotationOffset;
+
     [Header("Gravity")]
     [SerializeField]
     private GravityOptions _gravitySettings;
@@ -36,10 +46,20 @@ public class BasicMovementScript : MonoBehaviour
     [SerializeField]
     private Vector3 _moveVector; //debug purposes only
 
+    [Header("Raycast")]
+    [SerializeField]
+    [Tooltip("This decides where the raycast comes from Leave this variable blank for it to default to this gameobject.")]
+    private GameObject _raycastPoint;
+    [SerializeField]
+    private float _raycastDistance;
+    public Color raycastColor;
+
     /// <summary>
     /// Invisble to Inspector
     /// </summary>
     private Vector3 desiredMovementDirection;
+    private float _horizontalAxis;
+    private float _verticalAxis;
 
     // Start is called before the first frame update
     void Awake()
@@ -78,13 +98,13 @@ public class BasicMovementScript : MonoBehaviour
         {
             PlayerInput tempPlayerInput = FindObjectOfType<PlayerInput>();
             //If no PlayerInput script is in scene
-            if(tempPlayerInput == null)
+            if (tempPlayerInput == null)
             {
                 Debug.LogWarning("Could not find PlayerInput script for " + gameObject.name + ". Please add component to scene or assign InputAction manually");
             }
 
             //If Player input hasn't been assign a InputActionAsset...
-            else if(tempPlayerInput.actions == null)
+            else if (tempPlayerInput.actions == null)
             {
                 Debug.LogWarning("The Actions variable for " + tempPlayerInput.gameObject.name + " is null. Please assign variable on " + tempPlayerInput.gameObject.name + " or assign component on BasicMovementScript");
             }
@@ -95,7 +115,13 @@ public class BasicMovementScript : MonoBehaviour
                 _inputAction = tempPlayerInput.actions;
 
             }
-   
+
+        }
+
+        //If the Raycast starting point hasn't been assigned...
+        if (_raycastPoint == null)
+        {
+            _raycastPoint = gameObject;
         }
     }
 
@@ -127,7 +153,7 @@ public class BasicMovementScript : MonoBehaviour
     void ApplyGravity()
     {
         //Reset the MoveVector
-        Debug.Log(gameObject.name + ": Character controller is currently " + _characterController.isGrounded);
+      //  Debug.Log(gameObject.name + ": Character controller is currently " + _characterController.isGrounded);
         if (_gravitySettings.useCustomGravity && !_characterController.isGrounded)
         {
             _moveVector = Vector3.zero;
@@ -181,14 +207,14 @@ public class BasicMovementScript : MonoBehaviour
         set
         {
             //to save performance, this lives in a if statement
-            if(value !=maxMovementClamp)
+            if (value != maxMovementClamp)
             {
                 maxMovementClamp = value;
             }
         }
     }
 
-     //This allows for events on Get and Set functions for MovementMultiplier.
+    //This allows for events on Get and Set functions for MovementMultiplier.
     public float MovementMultiplier
     {
         get
@@ -199,33 +225,60 @@ public class BasicMovementScript : MonoBehaviour
         set
         {
             //to save performance, this lives in a if statement
-            if(value !=movementMultipler)
+            if (value != movementMultipler)
             {
-               movementMultipler = value;
+                movementMultipler = value;
             }
         }
     }
 
 
 
-    void Movement(Vector2 inputTranslation)
+    void Movement(Vector2 _inputTranslation)
     {
-        float horizontal = inputTranslation.x;
-        float vertical = inputTranslation.y;
+        //Sets up movement
+        _horizontalAxis = _inputTranslation.x;
+        _verticalAxis = _inputTranslation.y;
+
+        //Sets up Rotation
+        Vector3 _rotationDirection;
+        float rotationX = -_inputTranslation.x;
+        float rotationY = _inputTranslation.y;
+
+        //Sets movement and then calls rotation function
         switch (_controlType)
         {
             case ControlTypeEnum.SideScroller:
-                desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(horizontal, 0, 0), maxMovementClamp);
+                desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(_horizontalAxis, 0, 0), maxMovementClamp);
+                _rotationDirection = Vector3.ClampMagnitude(new Vector3(0, 0, rotationX), maxMovementClamp);
                 _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
+                MovementRotation(_rotationDirection);
                 break;
             case ControlTypeEnum.Topdown:
-                desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(horizontal, 0, vertical), maxMovementClamp);
+                desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(_horizontalAxis, 0, _verticalAxis), maxMovementClamp);
+                _rotationDirection = Vector3.ClampMagnitude(new Vector3(rotationY, 0, rotationX), maxMovementClamp);
                 _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
+                MovementRotation(_rotationDirection);
                 break;
-               
+
             default:
                 break;
         }
+        
+    }
+
+    void MovementRotation(Vector3 _desiredMoveDirection)
+    {
+        if (_desiredMoveDirection != Vector3.zero && _playerAvatarObject != null)
+        {
+            _playerAvatarObject.transform.rotation =  Quaternion.Slerp(_playerAvatarObject.transform.rotation, Quaternion.LookRotation(_desiredMoveDirection), _rotationSpeed /10);
+        }
+
+        else if(_desiredMoveDirection != Vector3.zero)
+        {
+            Debug.LogError("Could not find Player Avatar Object as part of the BasicMovementScript " + gameObject.name + ". Resolve null reference to get player rotation");
+        }
+
     }
 
     //Movement Input specific
