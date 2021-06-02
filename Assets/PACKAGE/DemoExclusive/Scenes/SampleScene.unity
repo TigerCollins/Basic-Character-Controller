@@ -238,7 +238,7 @@ MonoBehaviour:
   _moveVector: {x: 0, y: 0, z: 0}
   _raycastPoint: {fileID: 0}
   _raycastDistance: 0
-  raycastColor: {r: 0, g: 0, b: 0, a: 0}
+  raycastColour: {r: 0, g: 0, b: 0, a: 0}
 --- !u!23 &112961593
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -472,13 +472,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 289936482}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -0.561, y: 0.37, z: 0}
-  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
+  m_LocalScale: {x: 0.178536, y: 0.178536, z: 0.178536}
   m_Children: []
   m_Father: {fileID: 92150242}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -1326,9 +1326,9 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   _moveVector: {x: 0, y: 0, z: 0}
-  _raycastPoint: {fileID: 289936482}
+  _raycastPoint: {fileID: 289936486}
   _raycastDistance: 7.65
-  raycastColor: {r: 1, g: 0.033018887, b: 0.033018887, a: 1}
+  raycastColour: {r: 0.79607844, g: 0, b: 0, a: 1}
 --- !u!143 &1983969879
 CharacterController:
   m_ObjectHideFlags: 0

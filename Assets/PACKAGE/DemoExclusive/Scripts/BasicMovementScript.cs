@@ -49,10 +49,10 @@ public class BasicMovementScript : MonoBehaviour
     [Header("Raycast")]
     [SerializeField]
     [Tooltip("This decides where the raycast comes from Leave this variable blank for it to default to this gameobject.")]
-    private GameObject _raycastPoint;
+    private Transform _raycastPoint;
     [SerializeField]
     private float _raycastDistance;
-    public Color raycastColor;
+    public Color raycastColour;
 
     /// <summary>
     /// Invisble to Inspector
@@ -121,7 +121,8 @@ public class BasicMovementScript : MonoBehaviour
         //If the Raycast starting point hasn't been assigned...
         if (_raycastPoint == null)
         {
-            _raycastPoint = gameObject;
+            Debug.LogWarning("Could not find Raycast Point transform. Raycast may not be in the desired position as a result, add a reference if it is inaccurate");
+            _raycastPoint = transform;
         }
     }
 
@@ -131,6 +132,7 @@ public class BasicMovementScript : MonoBehaviour
         CheckGravity();
         ApplyGravity();
         Movement(_moveAxis);
+        Raycast();
     }
 
     /// <summary>
@@ -232,9 +234,22 @@ public class BasicMovementScript : MonoBehaviour
         }
     }
 
+    void Raycast()
+    {
+        RaycastHit hit;
+        Debug.DrawRay(_raycastPoint.position, _raycastPoint.forward * _raycastDistance, raycastColour, Time.deltaTime);
+        if (Physics.Raycast(_raycastPoint.position, _raycastPoint.forward, out hit, _raycastDistance))
+        { 
+            //Below is the if statement to find objects. Can be used from Unity 2017 onwards, otherwise use GetComponent instead of TryGetComponent()
+          /*  if(hit.collider.TryGetComponent())
+            {
 
+            }
+          */
+        }
+    }
 
-    void Movement(Vector2 _inputTranslation)
+            void Movement(Vector2 _inputTranslation)
     {
         //Sets up movement
         _horizontalAxis = _inputTranslation.x;
