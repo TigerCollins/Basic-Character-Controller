@@ -25,18 +25,11 @@ public class BasicMovementScript : MonoBehaviour
     [SerializeField]
     private ControlTypeEnum _controlType;
     public bool isPlayer = true;
-    public float movementMultipler = 2;
-    [Tooltip("If set correctly, the idea is that it stops diagonal movement from simply combining Horizontal and Vertical speeds.")]
-    public float maxMovementClamp = 1;
-    [ReadOnly]
     [SerializeField]
-    private Vector2 _moveAxis; //debug purposes only
+    private MovementDetails _movementControl;
 
-    [Space(10)]
 
-    [Range(0, 5)]
-    [SerializeField]
-    private float _rotationSpeed = .75f;
+
 
     [Header("World Interaction")]
     [ReadOnly]
@@ -123,8 +116,8 @@ public class BasicMovementScript : MonoBehaviour
     {
         CheckGravity();
         ApplyGravity();
-        Movement(_moveAxis);
-        if (_raycast.useRaycast)
+        Movement(_movementControl.moveAxis);
+        if(_raycast.useRaycast)
         {
             Debug.DrawRay(_raycast.raycastPoint.position, _raycast.raycastPoint.forward * _raycast.raycastDistance, _raycast.raycastColour, Time.deltaTime);
             //Raycast();
@@ -189,7 +182,7 @@ public class BasicMovementScript : MonoBehaviour
 
     public void adjustMovementVector(InputAction.CallbackContext context)
     {
-        _moveAxis = context.ReadValue<Vector2>();  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
+        _movementControl.moveAxis = context.ReadValue<Vector2>();  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
     }
 
 
@@ -198,15 +191,15 @@ public class BasicMovementScript : MonoBehaviour
     {
         get
         {
-            return maxMovementClamp;
+            return _movementControl.maxMovementClamp;
         }
 
         set
         {
             //to save performance, this lives in a if statement
-            if (value != maxMovementClamp)
+            if (value != _movementControl.maxMovementClamp)
             {
-                maxMovementClamp = value;
+                _movementControl.maxMovementClamp = value;
             }
         }
     }
@@ -216,15 +209,15 @@ public class BasicMovementScript : MonoBehaviour
     {
         get
         {
-            return movementMultipler;
+            return _movementControl.movementMultipler;
         }
 
         set
         {
             //to save performance, this lives in a if statement
-            if (value != movementMultipler)
+            if (value != _movementControl.movementMultipler)
             {
-                movementMultipler = value;
+                _movementControl.movementMultipler = value;
             }
         }
     }
@@ -235,11 +228,11 @@ public class BasicMovementScript : MonoBehaviour
         if (_raycast.useRaycast && Physics.Raycast(_raycast.raycastPoint.position, _raycast.raycastPoint.forward, out hit, _raycast.raycastDistance) && context.performed)
         {
             //Below is the if statement to find objects. Can be used from Unity 2017 onwards, otherwise use GetComponent instead of TryGetComponent()
-            /*   
-             if (hit.collider.TryGetComponent(out QuipScript newQuipScript))
-               {
-                  newQuipScript.UpdateText();
-               } 
+           /*
+            if (hit.collider.TryGetComponent(out QuipScript newQuipScript))
+            {
+                newQuipScript.UpdateText();
+            }
             */
         }
     }
@@ -259,14 +252,14 @@ public class BasicMovementScript : MonoBehaviour
         switch (_controlType)
         {
             case ControlTypeEnum.SideScroller:
-                desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(_horizontalAxis, 0, 0), maxMovementClamp);
-                _rotationDirection = Vector3.ClampMagnitude(new Vector3(0, 0, rotationX), maxMovementClamp);
+                desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(_horizontalAxis, 0, 0), _movementControl.maxMovementClamp);
+                _rotationDirection = Vector3.ClampMagnitude(new Vector3(0, 0, rotationX), _movementControl.maxMovementClamp);
                 _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
                 MovementRotation(_rotationDirection);
                 break;
             case ControlTypeEnum.Topdown:
-                desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(_horizontalAxis, 0, _verticalAxis), maxMovementClamp);
-                _rotationDirection = Vector3.ClampMagnitude(new Vector3(rotationY, 0, rotationX), maxMovementClamp);
+                desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(_horizontalAxis, 0, _verticalAxis), _movementControl.maxMovementClamp);
+                _rotationDirection = Vector3.ClampMagnitude(new Vector3(rotationY, 0, rotationX), _movementControl.maxMovementClamp);
                 _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
                 MovementRotation(_rotationDirection);
                 break;
@@ -279,7 +272,7 @@ public class BasicMovementScript : MonoBehaviour
     {
         if (_desiredMoveDirection != Vector3.zero && _playerAvatarObject != null)
         {
-            _playerAvatarObject.transform.rotation = Quaternion.Slerp(_playerAvatarObject.transform.rotation, Quaternion.LookRotation(_desiredMoveDirection), _rotationSpeed / 10);
+            _playerAvatarObject.transform.rotation = Quaternion.Slerp(_playerAvatarObject.transform.rotation, Quaternion.LookRotation(_desiredMoveDirection), _movementControl.rotationSpeed / 10);
         }
 
         else if (_desiredMoveDirection != Vector3.zero)
@@ -310,4 +303,19 @@ public class RaycastDetails
     public Transform raycastPoint;
     public float raycastDistance;
     public Color raycastColour;
+}
+
+[System.Serializable]
+public class MovementDetails
+{
+    public float movementMultipler = 2;
+    [Tooltip("If set correctly, the idea is that it stops diagonal movement from simply combining Horizontal and Vertical speeds.")]
+    public float maxMovementClamp = 1;
+    [ReadOnly]
+    public Vector2 moveAxis; //debug purposes only
+
+    [Space(10)]
+
+    [Range(0, 5)]
+    public float rotationSpeed = .75f;
 }
