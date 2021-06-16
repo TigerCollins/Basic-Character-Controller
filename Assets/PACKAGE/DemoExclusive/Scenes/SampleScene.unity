@@ -223,11 +223,21 @@ MonoBehaviour:
   _playerAvatarObject: {fileID: 0}
   _controlType: 0
   isPlayer: 0
-  movementMultipler: 2
-  maxMovementClamp: 1
-  _moveAxis: {x: 0, y: 0}
-  _rotationSpeed: 0
-  _rotationOffset: {x: 0, y: 0, z: 0}
+  _movementControl:
+    movementMultipler: 2
+    maxMovementClamp: 1
+    moveAxis: {x: 0, y: 0}
+    rotationSpeed: 0.75
+  _firstPersonControl:
+    lookAxis: {x: 0, y: 0}
+    firstPersonCamera: {fileID: 0}
+    ySensitivity: 0
+    xSensitivity: 0
+    yAxis:
+      invertY: 0
+      bottomClamp: 0
+      topClamp: 0
+  _currentMovement: {x: 0, y: 0, z: 0}
   _gravitySettings:
     useCustomGravity: 0
     customGravityDetails: {x: 0, y: -0.09, z: 0}
@@ -235,10 +245,11 @@ MonoBehaviour:
     onCustomGravityStrengthChange:
       m_PersistentCalls:
         m_Calls: []
-  _moveVector: {x: 0, y: 0, z: 0}
-  _raycastPoint: {fileID: 0}
-  _raycastDistance: 0
-  raycastColour: {r: 0, g: 0, b: 0, a: 0}
+  _raycast:
+    useRaycast: 0
+    raycastPoint: {fileID: 0}
+    raycastDistance: 0
+    raycastColour: {r: 0, g: 0, b: 0, a: 0}
 --- !u!23 &112961593
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -383,6 +394,120 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 151432330}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &197668025
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 197668026}
+  - component: {fileID: 197668028}
+  - component: {fileID: 197668027}
+  m_Layer: 0
+  m_Name: Camera
+  m_TagString: MainCamera
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &197668026
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 197668025}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 214001972}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!81 &197668027
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 197668025}
+  m_Enabled: 1
+--- !u!20 &197668028
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 197668025}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_FocalLength: 50
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967231
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!1 &214001971
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 214001972}
+  m_Layer: 7
+  m_Name: CameraHolder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &214001972
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 214001971}
+  m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0.43399996, z: 0.041999906}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 197668026}
+  m_Father: {fileID: 1057930158}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!1 &289936482
 GameObject:
   m_ObjectHideFlags: 0
@@ -394,27 +519,13 @@ GameObject:
   - component: {fileID: 289936486}
   - component: {fileID: 289936485}
   - component: {fileID: 289936484}
-  - component: {fileID: 289936483}
-  m_Layer: 7
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!65 &289936483
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 289936482}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &289936484
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -684,6 +795,7 @@ Transform:
   m_Children:
   - {fileID: 151432331}
   - {fileID: 92150242}
+  - {fileID: 214001972}
   m_Father: {fileID: 1983969882}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1260,6 +1372,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 6f3d4e28-a4fe-4dcc-b2a0-edb7dbee9bec
     m_ActionName: Player/ResetPlayer[/Keyboard/r]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1983969878}
+        m_TargetAssemblyTypeName: BasicMovementScript, Assembly-CSharp
+        m_MethodName: adjustLookVector
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: ce8cd114-ce71-4129-8582-7ae3b3ac7c60
+    m_ActionName: Player/Look[/Mouse/delta]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -1311,13 +1439,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _characterController: {fileID: 1983969879}
   _playerAvatarObject: {fileID: 1057930157}
-  _controlType: 0
+  _controlType: 2
   isPlayer: 1
-  movementMultipler: 5
-  maxMovementClamp: 1
-  _moveAxis: {x: 0, y: 0}
-  _rotationSpeed: 3.37
-  _rotationOffset: {x: 0, y: 0, z: 0}
+  _movementControl:
+    movementMultipler: 2
+    maxMovementClamp: 1
+    moveAxis: {x: 0, y: 0}
+    rotationSpeed: 0.75
+  _firstPersonControl:
+    lookAxis: {x: 0, y: 0}
+    firstPersonCamera: {fileID: 197668028}
+    ySensitivity: 3.62
+    xSensitivity: 3.67
+    yAxis:
+      invertY: 0
+      bottomClamp: -90
+      topClamp: 90
+  _currentMovement: {x: 0, y: 0, z: 0}
   _gravitySettings:
     useCustomGravity: 0
     customGravityDetails: {x: 0, y: 0, z: 0}
@@ -1325,10 +1463,11 @@ MonoBehaviour:
     onCustomGravityStrengthChange:
       m_PersistentCalls:
         m_Calls: []
-  _moveVector: {x: 0, y: 0, z: 0}
-  _raycastPoint: {fileID: 289936486}
-  _raycastDistance: 7.65
-  raycastColour: {r: 0.79607844, g: 0, b: 0, a: 1}
+  _raycast:
+    useRaycast: 0
+    raycastPoint: {fileID: 0}
+    raycastDistance: 0
+    raycastColour: {r: 0, g: 0, b: 0, a: 0}
 --- !u!143 &1983969879
 CharacterController:
   m_ObjectHideFlags: 0
@@ -1354,8 +1493,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1983969877}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.48, y: 0.8862, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.5125535, y: 0.88658255, z: 0.009806044}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1057930158}

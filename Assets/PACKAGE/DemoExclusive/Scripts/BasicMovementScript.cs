@@ -27,6 +27,8 @@ public class BasicMovementScript : MonoBehaviour
     public bool isPlayer = true;
     [SerializeField]
     private MovementDetails _movementControl;
+    [SerializeField]
+    private FirstPersonDetails _firstPersonControl;
 
 
 
@@ -48,6 +50,10 @@ public class BasicMovementScript : MonoBehaviour
     private float _horizontalAxis;
     private float _verticalAxis;
 
+    private float _horizontalLookAxis;
+    private float _verticalLookAxis;
+
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -63,7 +69,8 @@ public class BasicMovementScript : MonoBehaviour
     public enum ControlTypeEnum
     {
         SideScroller,
-        Topdown
+        Topdown,
+        FirstPerson
     }
 
     public void CheckForNullReference()
@@ -185,6 +192,30 @@ public class BasicMovementScript : MonoBehaviour
         _movementControl.moveAxis = context.ReadValue<Vector2>();  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
     }
 
+    public void adjustLookVector(InputAction.CallbackContext context)
+    {
+        if(_controlType == ControlTypeEnum.FirstPerson)
+        {
+            _firstPersonControl.lookAxis = context.ReadValue<Vector2>();  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
+            _horizontalLookAxis += (_firstPersonControl.xSensitivity / 10) * _firstPersonControl.lookAxis.x;
+            float newVerticalLookAxis = _verticalLookAxis + ((_firstPersonControl.ySensitivity/10) * _firstPersonControl.lookAxis.y);
+            _verticalLookAxis =  Mathf.Clamp(newVerticalLookAxis, _firstPersonControl.yAxis.bottomClamp, _firstPersonControl.yAxis.topClamp);
+            if(_firstPersonControl.yAxis.invertY)
+            {
+                _firstPersonControl.firstPersonCamera.transform.localEulerAngles = new Vector3(_verticalLookAxis, 0, 0);
+                _firstPersonControl.firstPersonCamera.transform.parent.transform.localEulerAngles = new Vector3(0, _horizontalLookAxis, 0);
+            }
+
+            else
+            {
+                _firstPersonControl.firstPersonCamera.transform.localEulerAngles = new Vector3(-_verticalLookAxis, 0, 0);
+                _firstPersonControl.firstPersonCamera.transform.parent.transform.localEulerAngles = new Vector3(0, _horizontalLookAxis, 0);
+
+            }
+        }
+    }
+    
+
 
     //This allows for events on Get and Set functions for MaxMovementClamp.
     public float MaxMovementClamp
@@ -263,6 +294,20 @@ public class BasicMovementScript : MonoBehaviour
                 _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
                 MovementRotation(_rotationDirection);
                 break;
+            case ControlTypeEnum.FirstPerson:
+                if(_firstPersonControl.firstPersonCamera !=null)
+                {
+                   // Vector3 camera
+                    desiredMovementDirection = _firstPersonControl.firstPersonCamera.transform.right * _horizontalAxis + _firstPersonControl.firstPersonCamera.transform.parent.transform.forward * _verticalAxis;
+                    _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
+                }
+
+                else
+                {
+                    Debug.LogError("Couldn't find first person camera, assign the missing variable.");
+                }
+
+                break;
             default:
                 break;
         }
@@ -318,4 +363,31 @@ public class MovementDetails
 
     [Range(0, 5)]
     public float rotationSpeed = .75f;
+}
+
+[System.Serializable]
+public class FirstPersonDetails
+{ 
+    public Vector2 lookAxis;
+    public Camera firstPersonCamera;
+
+    [Space(5)]
+
+    [Range(0, 10)]
+    public float ySensitivity = 3;
+    [Range(0, 10)]
+    public float xSensitivity = 3;
+    public YAxisDetails yAxis;
+
+}
+
+[System.Serializable]
+public class YAxisDetails
+{
+    public bool invertY;
+
+    [Space(5)]
+
+    public float bottomClamp;
+    public float topClamp;
 }
