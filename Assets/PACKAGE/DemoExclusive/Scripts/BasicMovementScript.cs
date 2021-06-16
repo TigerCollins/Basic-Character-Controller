@@ -53,6 +53,11 @@ public class BasicMovementScript : MonoBehaviour
     private float _horizontalLookAxis;
     private float _verticalLookAxis;
 
+    private Vector2 previousvector2;
+
+    //cam tilt
+    float curTilt = 0f;
+
 
     // Start is called before the first frame update
     void Awake()
@@ -124,7 +129,8 @@ public class BasicMovementScript : MonoBehaviour
         CheckGravity();
         ApplyGravity();
         Movement(_movementControl.moveAxis);
-        if(_raycast.useRaycast)
+        CameraTilter();
+        if (_raycast.useRaycast)
         {
             Debug.DrawRay(_raycast.raycastPoint.position, _raycast.raycastPoint.forward * _raycast.raycastDistance, _raycast.raycastColour, Time.deltaTime);
             //Raycast();
@@ -196,11 +202,12 @@ public class BasicMovementScript : MonoBehaviour
     {
         if(_controlType == ControlTypeEnum.FirstPerson)
         {
-            _firstPersonControl.lookAxis = context.ReadValue<Vector2>();  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
+            _firstPersonControl.lookAxis = context.ReadValue<Vector2>() ;  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
             _horizontalLookAxis += (_firstPersonControl.xSensitivity / 10) * _firstPersonControl.lookAxis.x;
             float newVerticalLookAxis = _verticalLookAxis + ((_firstPersonControl.ySensitivity/10) * _firstPersonControl.lookAxis.y);
             _verticalLookAxis =  Mathf.Clamp(newVerticalLookAxis, _firstPersonControl.yAxis.bottomClamp, _firstPersonControl.yAxis.topClamp);
-            if(_firstPersonControl.yAxis.invertY)
+           // CameraTilter();
+            if (_firstPersonControl.yAxis.invertY)
             {
                 _firstPersonControl.firstPersonCamera.transform.localEulerAngles = new Vector3(_verticalLookAxis, 0, 0);
                 _firstPersonControl.firstPersonCamera.transform.parent.transform.localEulerAngles = new Vector3(0, _horizontalLookAxis, 0);
@@ -214,8 +221,45 @@ public class BasicMovementScript : MonoBehaviour
             }
         }
     }
-    
 
+    public void CameraTilterInput(InputAction.CallbackContext context)
+    {
+
+    }
+
+    public void CameraTilter()
+    {
+        if(_controlType == ControlTypeEnum.FirstPerson)
+        {
+
+            // Cursor.lockState = CursorLockMode.Locked;
+            //* _firstPersonControl.tiltStrength   //Mathf.Clamp(_firstPersonControl.lookAxis.x, -5, 5)
+            //get rid of lerp
+            float localTiltX = 0;
+            float localTiltY = 0;
+            if (-_firstPersonControl.lookAxis.x >-.2f && _firstPersonControl.lookAxis.x >.2f)
+            {
+                 localTiltX = -_firstPersonControl.lookAxis.x * 6 * _firstPersonControl.tiltStrengthMultiplier;
+            }
+            if (-_firstPersonControl.lookAxis.y >-.2f && _firstPersonControl.lookAxis.y >.2f)
+            {
+                 localTiltX = -_firstPersonControl.lookAxis.y * 6 * _firstPersonControl.tiltStrengthMultiplier;
+            }
+               
+               float curTiltX = Mathf.Lerp(curTilt, -_firstPersonControl.lookAxis.x, _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
+               float curTiltY = Mathf.Lerp(curTilt, -_firstPersonControl.lookAxis.x, _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
+            
+            //  float camTiltY = Mathf.Lerp(curTilt, -_firstPersonControl.lookAxis.y * 6 * _firstPersonControl.tiltStrength, _firstPersonControl.camHeightLerp * Time.fixedDeltaTime);
+             float camTiltX = Mathf.Lerp(curTiltX, localTiltX , _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
+             float camTiltY = Mathf.Lerp(curTiltY, localTiltY , _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
+
+            Vector3 newTiltAngle = new Vector3(camTiltX, 0, camTiltY);
+            // _firstPersonControl.firstPersonCamera.transform.parent.parent.transform.localEulerAngles = newTiltAngle;
+            _firstPersonControl.firstPersonCamera.transform.parent.parent.transform.localRotation = Quaternion.Euler(newTiltAngle); //;;+ (Vector3.forward * _verticalLookAxis * _firstPersonControl.cameraTilt) + (Vector3.forward * curTilt));
+            // _firstPersonControl.tiltSpeed / 10);
+
+        }
+    }
 
     //This allows for events on Get and Set functions for MaxMovementClamp.
     public float MaxMovementClamp
@@ -378,6 +422,12 @@ public class FirstPersonDetails
     [Range(0, 10)]
     public float xSensitivity = 3;
     public YAxisDetails yAxis;
+
+    [Space(5)]
+
+
+    public float tiltStrengthMultiplier = 5f;
+    public float camLerpTime = 5f;
 
 }
 

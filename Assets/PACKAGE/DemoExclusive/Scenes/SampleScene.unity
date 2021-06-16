@@ -168,7 +168,7 @@ GameObject:
   - component: {fileID: 112961591}
   - component: {fileID: 112961595}
   - component: {fileID: 112961592}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -237,6 +237,8 @@ MonoBehaviour:
       invertY: 0
       bottomClamp: 0
       topClamp: 0
+    tiltStrengthMultiplier: 5
+    camLerpTime: 5
   _currentMovement: {x: 0, y: 0, z: 0}
   _gravitySettings:
     useCustomGravity: 0
@@ -323,7 +325,7 @@ GameObject:
   - component: {fileID: 151432331}
   - component: {fileID: 151432333}
   - component: {fileID: 151432332}
-  m_Layer: 7
+  m_Layer: 6
   m_Name: Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -486,7 +488,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 214001972}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: CameraHolder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -500,13 +502,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 214001971}
-  m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0.43399996, z: 0.041999906}
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 197668026}
-  m_Father: {fileID: 1057930158}
-  m_RootOrder: 2
+  m_Father: {fileID: 2107193910}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!1 &289936482
 GameObject:
@@ -700,7 +702,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!81 &963194226
 AudioListener:
   m_ObjectHideFlags: 0
@@ -795,7 +797,7 @@ Transform:
   m_Children:
   - {fileID: 151432331}
   - {fileID: 92150242}
-  - {fileID: 214001972}
+  - {fileID: 2107193910}
   m_Father: {fileID: 1983969882}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1449,12 +1451,14 @@ MonoBehaviour:
   _firstPersonControl:
     lookAxis: {x: 0, y: 0}
     firstPersonCamera: {fileID: 197668028}
-    ySensitivity: 3.62
-    xSensitivity: 3.67
+    ySensitivity: 0.7
+    xSensitivity: 0.7
     yAxis:
       invertY: 0
       bottomClamp: -90
       topClamp: 90
+    tiltStrengthMultiplier: 30
+    camLerpTime: 20
   _currentMovement: {x: 0, y: 0, z: 0}
   _gravitySettings:
     useCustomGravity: 0
@@ -1501,6 +1505,37 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2107193909
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2107193910}
+  m_Layer: 0
+  m_Name: CameraHolder - tilt
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2107193910
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2107193909}
+  m_LocalRotation: {x: 0.007497461, y: -0.00033324584, z: 0.044402737, w: 0.9989855}
+  m_LocalPosition: {x: 0, y: 0.752, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 214001972}
+  m_Father: {fileID: 1057930158}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0.86, y: 0, z: 5.09}
 --- !u!1 &2139906162
 GameObject:
   m_ObjectHideFlags: 0
