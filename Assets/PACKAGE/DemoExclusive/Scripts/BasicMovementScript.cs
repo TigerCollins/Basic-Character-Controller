@@ -29,8 +29,10 @@ public class BasicMovementScript : MonoBehaviour
     private MovementDetails _movementControl;
     [SerializeField]
     private FirstPersonDetails _firstPersonControl;
-
-
+    [SerializeField]
+    private JumpDetails jumpDetails;
+        [SerializeField]
+    private SprintDetails sprintDetails;
 
 
     [Header("World Interaction")]
@@ -41,6 +43,7 @@ public class BasicMovementScript : MonoBehaviour
     private GravityOptions _gravitySettings;
     [SerializeField]
     private RaycastDetails _raycast;
+   
 
 
     /// <summary>
@@ -53,10 +56,19 @@ public class BasicMovementScript : MonoBehaviour
     private float _horizontalLookAxis;
     private float _verticalLookAxis;
 
-    private Vector2 previousvector2;
+    Vector3 velocity;
+    float gravity;
+
+
+    float baseFOV;
+    float newFOV;
+    float baseSprintMultipler = 1;
+    float actualSprintMultipler = 1;
+    bool isSprinting;
+    bool hasJumped;
 
     //cam tilt
-    float curTilt = 0f;
+    float currentTilt = 0f;
 
 
     // Start is called before the first frame update
@@ -64,11 +76,15 @@ public class BasicMovementScript : MonoBehaviour
     {
         CheckForNullReference();
         AwakeGravity();
+        Cursor.lockState = CursorLockMode.Locked;
+        SprintSetup();
     }
 
-    private void Start()
+    private void SprintSetup()
     {
-
+        if(isPlayer)
+        baseFOV = _firstPersonControl.firstPersonCamera.fieldOfView;
+        newFOV = baseFOV;
     }
 
     public enum ControlTypeEnum
@@ -129,7 +145,9 @@ public class BasicMovementScript : MonoBehaviour
         CheckGravity();
         ApplyGravity();
         Movement(_movementControl.moveAxis);
-        CameraTilter();
+        CheckGrounded();
+        FOVLerp();
+
         if (_raycast.useRaycast)
         {
             Debug.DrawRay(_raycast.raycastPoint.position, _raycast.raycastPoint.forward * _raycast.raycastDistance, _raycast.raycastColour, Time.deltaTime);
@@ -137,6 +155,12 @@ public class BasicMovementScript : MonoBehaviour
         }
     }
 
+
+    void FixedUpdate()
+    {
+        CameraTilter();
+
+    }
     /// <summary>
     /// Gravity specific functions
     /// </summary>
@@ -145,12 +169,14 @@ public class BasicMovementScript : MonoBehaviour
     {
         if (_gravitySettings.useCustomGravity && _gravitySettings.customGravityDetails != _gravitySettings.previousGravityStrength)
         {
+            gravity = _gravitySettings.customGravityDetails.y;
             _gravitySettings.previousGravityStrength = _gravitySettings.customGravityDetails;
         }
 
         else if (Physics.gravity != _gravitySettings.previousGravityStrength)
         {
             _gravitySettings.previousGravityStrength = Physics.gravity;
+            gravity = Physics.gravity.y;
         }
     }
 
@@ -158,19 +184,21 @@ public class BasicMovementScript : MonoBehaviour
     {
         //Reset the MoveVector
         //  Debug.Log(gameObject.name + ": Character controller is currently " + _characterController.isGrounded);
-        if (_gravitySettings.useCustomGravity && !_characterController.isGrounded)
+        if (_gravitySettings.useCustomGravity )
         {
             _currentMovement = Vector3.zero;
-            _characterController.Move(_gravitySettings.customGravityDetails * Time.deltaTime);
+            velocity += _gravitySettings.customGravityDetails * Time.deltaTime;
             _currentMovement += _gravitySettings.customGravityDetails;
         }
 
-        else if (!_gravitySettings.useCustomGravity && !_characterController.isGrounded)
+        else if (!_gravitySettings.useCustomGravity)
         {
             _currentMovement = Vector3.zero;
-            _characterController.Move(Physics.gravity * Time.deltaTime); ;
+            velocity.y += Physics.gravity.y * Time.deltaTime; 
             _currentMovement += Physics.gravity;
         }
+        _characterController.Move(velocity * Time.deltaTime);
+
     }
 
     void CheckGravity()
@@ -178,12 +206,15 @@ public class BasicMovementScript : MonoBehaviour
         if (_gravitySettings.useCustomGravity && _gravitySettings.customGravityDetails != _gravitySettings.previousGravityStrength)
         {
             _gravitySettings.previousGravityStrength = _gravitySettings.customGravityDetails;
+            gravity = _gravitySettings.customGravityDetails.y;
             _gravitySettings.onCustomGravityStrengthChange.Invoke();
         }
 
         else if (Physics.gravity != _gravitySettings.previousGravityStrength)
         {
             _gravitySettings.previousGravityStrength = Physics.gravity;
+            gravity = Physics.gravity.y;
+
             _gravitySettings.onCustomGravityStrengthChange.Invoke();
         }
     }
@@ -193,71 +224,96 @@ public class BasicMovementScript : MonoBehaviour
     /// <param name="context"></param> relates to the use of the PlayerInputModule
     /// </summary>
 
-    public void adjustMovementVector(InputAction.CallbackContext context)
+    public void AdjustMovementVector(InputAction.CallbackContext context)
     {
         _movementControl.moveAxis = context.ReadValue<Vector2>();  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
     }
 
-    public void adjustLookVector(InputAction.CallbackContext context)
+    public void AdjustLookVector(InputAction.CallbackContext context)
     {
-        if(_controlType == ControlTypeEnum.FirstPerson)
+        if (_controlType == ControlTypeEnum.FirstPerson)
         {
-            _firstPersonControl.lookAxis = context.ReadValue<Vector2>() ;  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
+            _firstPersonControl.lookAxis = context.ReadValue<Vector2>();  //Mainly for debugging. You can place Context.ReadValue directly into the Movement argument if desired.
             _horizontalLookAxis += (_firstPersonControl.xSensitivity / 10) * _firstPersonControl.lookAxis.x;
-            float newVerticalLookAxis = _verticalLookAxis + ((_firstPersonControl.ySensitivity/10) * _firstPersonControl.lookAxis.y);
-            _verticalLookAxis =  Mathf.Clamp(newVerticalLookAxis, _firstPersonControl.yAxis.bottomClamp, _firstPersonControl.yAxis.topClamp);
-           // CameraTilter();
+            
+            float newVerticalLookAxis = _verticalLookAxis + ((_firstPersonControl.ySensitivity / 10) * _firstPersonControl.lookAxis.y);
+            _verticalLookAxis = Mathf.Clamp(newVerticalLookAxis, _firstPersonControl.yAxis.bottomClamp, _firstPersonControl.yAxis.topClamp);
+            // CameraTilter();
             if (_firstPersonControl.yAxis.invertY)
             {
                 _firstPersonControl.firstPersonCamera.transform.localEulerAngles = new Vector3(_verticalLookAxis, 0, 0);
                 _firstPersonControl.firstPersonCamera.transform.parent.transform.localEulerAngles = new Vector3(0, _horizontalLookAxis, 0);
+                
             }
 
             else
             {
                 _firstPersonControl.firstPersonCamera.transform.localEulerAngles = new Vector3(-_verticalLookAxis, 0, 0);
                 _firstPersonControl.firstPersonCamera.transform.parent.transform.localEulerAngles = new Vector3(0, _horizontalLookAxis, 0);
+          
 
+            }
+           // transform.Rotate(Vector3.up * _firstPersonControl.lookAxis.x);
+        }
+    }
+
+    
+
+    public void JumpFunction(InputAction.CallbackContext callbackContext)
+    {
+        if(jumpDetails.canJump && callbackContext.performed && jumpDetails.isGrounded && !hasJumped)
+        {
+            hasJumped = true;
+            if(_gravitySettings.useCustomGravity)
+            {
+                velocity.y = Mathf.Sqrt(jumpDetails.jumpHeight * -2f * gravity);
+
+            }
+
+            else
+            {
+                velocity.y = Mathf.Sqrt(jumpDetails.jumpHeight * -2f * gravity);
+
+            }
+            
+        }
+
+    }
+
+    public void CheckGrounded()
+    {
+        if(jumpDetails.groudCheck != null)
+        {
+            jumpDetails.isGrounded = Physics.CheckSphere(jumpDetails.groudCheck.position, jumpDetails.groundDistance, jumpDetails.groundLayerMask);
+            if(jumpDetails.isGrounded == false)
+            {
+                hasJumped = false;
             }
         }
     }
 
-    public void CameraTilterInput(InputAction.CallbackContext context)
-    {
-
-    }
-
     public void CameraTilter()
     {
-        if(_controlType == ControlTypeEnum.FirstPerson)
+        if (_controlType == ControlTypeEnum.FirstPerson)
         {
+          //  localTilt = 0;
 
-            // Cursor.lockState = CursorLockMode.Locked;
-            //* _firstPersonControl.tiltStrength   //Mathf.Clamp(_firstPersonControl.lookAxis.x, -5, 5)
-            //get rid of lerp
-            float localTiltX = 0;
-            float localTiltY = 0;
-            if (-_firstPersonControl.lookAxis.x >-.2f && _firstPersonControl.lookAxis.x >.2f)
-            {
-                 localTiltX = -_firstPersonControl.lookAxis.x * 6 * _firstPersonControl.tiltStrengthMultiplier;
-            }
-            if (-_firstPersonControl.lookAxis.y >-.2f && _firstPersonControl.lookAxis.y >.2f)
-            {
-                 localTiltX = -_firstPersonControl.lookAxis.y * 6 * _firstPersonControl.tiltStrengthMultiplier;
-            }
-               
-               float curTiltX = Mathf.Lerp(curTilt, -_firstPersonControl.lookAxis.x, _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
-               float curTiltY = Mathf.Lerp(curTilt, -_firstPersonControl.lookAxis.x, _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
-            
-            //  float camTiltY = Mathf.Lerp(curTilt, -_firstPersonControl.lookAxis.y * 6 * _firstPersonControl.tiltStrength, _firstPersonControl.camHeightLerp * Time.fixedDeltaTime);
-             float camTiltX = Mathf.Lerp(curTiltX, localTiltX , _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
-             float camTiltY = Mathf.Lerp(curTiltY, localTiltY , _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
+            // if (-_firstPersonControl.lookAxis.x > -1f && _firstPersonControl.lookAxis.x > 1f)
+            // {
+            float localTilt = -_firstPersonControl.lookAxis.x * 6 * _firstPersonControl.tiltStrengthMultiplier;
+          //  }
 
-            Vector3 newTiltAngle = new Vector3(camTiltX, 0, camTiltY);
-            // _firstPersonControl.firstPersonCamera.transform.parent.parent.transform.localEulerAngles = newTiltAngle;
-            _firstPersonControl.firstPersonCamera.transform.parent.parent.transform.localRotation = Quaternion.Euler(newTiltAngle); //;;+ (Vector3.forward * _verticalLookAxis * _firstPersonControl.cameraTilt) + (Vector3.forward * curTilt));
-            // _firstPersonControl.tiltSpeed / 10);
 
+            currentTilt = Mathf.Lerp(currentTilt, -_firstPersonControl.lookAxis.x, _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
+          
+
+            float camTilt = Mathf.Lerp(currentTilt, localTilt, _firstPersonControl.camLerpTime * Time.fixedDeltaTime);
+           // currentTilt = camTilt;
+            Debug.Log(camTilt);
+            Vector3 newTiltAngle = new Vector3(0, 0, camTilt);
+
+            _firstPersonControl.firstPersonCamera.transform.parent.parent.transform.localRotation = Quaternion.Euler(newTiltAngle);
+          //  _firstPersonControl.firstPersonCamera.transform.localRotation = Quaternion.Euler((Vector3.left * _verticalLookAxis) + (Vector3.forward * _horizontalLookAxis * _firstPersonControl.cameraTilt) + (Vector3.forward * currentTilt));
         }
     }
 
@@ -303,12 +359,12 @@ public class BasicMovementScript : MonoBehaviour
         if (_raycast.useRaycast && Physics.Raycast(_raycast.raycastPoint.position, _raycast.raycastPoint.forward, out hit, _raycast.raycastDistance) && context.performed)
         {
             //Below is the if statement to find objects. Can be used from Unity 2017 onwards, otherwise use GetComponent instead of TryGetComponent()
-           /*
-            if (hit.collider.TryGetComponent(out QuipScript newQuipScript))
-            {
-                newQuipScript.UpdateText();
-            }
-            */
+            /*
+             if (hit.collider.TryGetComponent(out QuipScript newQuipScript))
+             {
+                 newQuipScript.UpdateText();
+             }
+             */
         }
     }
 
@@ -329,21 +385,21 @@ public class BasicMovementScript : MonoBehaviour
             case ControlTypeEnum.SideScroller:
                 desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(_horizontalAxis, 0, 0), _movementControl.maxMovementClamp);
                 _rotationDirection = Vector3.ClampMagnitude(new Vector3(0, 0, rotationX), _movementControl.maxMovementClamp);
-                _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
+                _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier * actualSprintMultipler);
                 MovementRotation(_rotationDirection);
                 break;
             case ControlTypeEnum.Topdown:
                 desiredMovementDirection = Vector3.ClampMagnitude(new Vector3(_horizontalAxis, 0, _verticalAxis), _movementControl.maxMovementClamp);
                 _rotationDirection = Vector3.ClampMagnitude(new Vector3(rotationY, 0, rotationX), _movementControl.maxMovementClamp);
-                _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
+                _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier * actualSprintMultipler);
                 MovementRotation(_rotationDirection);
                 break;
             case ControlTypeEnum.FirstPerson:
-                if(_firstPersonControl.firstPersonCamera !=null)
+                if (_firstPersonControl.firstPersonCamera != null)
                 {
-                   // Vector3 camera
+                    // Vector3 camera
                     desiredMovementDirection = _firstPersonControl.firstPersonCamera.transform.right * _horizontalAxis + _firstPersonControl.firstPersonCamera.transform.parent.transform.forward * _verticalAxis;
-                    _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier);
+                    _characterController.Move(desiredMovementDirection * Time.deltaTime * MovementMultiplier * actualSprintMultipler);
                 }
 
                 else
@@ -367,6 +423,60 @@ public class BasicMovementScript : MonoBehaviour
         else if (_desiredMoveDirection != Vector3.zero)
         {
             Debug.LogError("Could not find Player Avatar Object as part of the BasicMovementScript " + gameObject.name + ". Resolve null reference to get player rotation");
+        }
+    }
+
+    public void SprintMovement(InputAction.CallbackContext callbackContext)
+    {
+        if(callbackContext.performed || callbackContext.started )
+        {
+            if(_controlType == ControlTypeEnum.FirstPerson && sprintDetails.canSprint)
+            {
+                if (_movementControl.moveAxis.y > 0)
+                {
+                    isSprinting = true;
+
+                    newFOV = baseFOV * sprintDetails.fovMultiplier;
+                    actualSprintMultipler = sprintDetails.sprintMultiplier;
+                }
+            }
+
+        }
+
+        else if(callbackContext.canceled && sprintDetails.canSprint)
+        {
+            if (_controlType == ControlTypeEnum.FirstPerson)
+            {
+                isSprinting = false;
+                newFOV = baseFOV;
+                actualSprintMultipler = baseSprintMultipler;
+            }
+        }
+    }
+
+    public void IsSprintingCheck()
+    {
+        if(_movementControl.moveAxis.y < 0 || _movementControl.moveAxis.x != 0)
+        {
+            isSprinting = false;
+        }
+    }
+
+    public void FOVLerp()
+    {
+        if(_controlType == ControlTypeEnum.FirstPerson)
+        {
+            if(_movementControl.moveAxis.y > 0 && isSprinting)
+            {
+                _firstPersonControl.firstPersonCamera.fieldOfView = Mathf.Lerp(_firstPersonControl.firstPersonCamera.fieldOfView, newFOV, sprintDetails.fovLerpTime * Time.deltaTime);
+
+            }
+
+            else if(!isSprinting)
+            {
+                _firstPersonControl.firstPersonCamera.fieldOfView = Mathf.Lerp(_firstPersonControl.firstPersonCamera.fieldOfView, baseFOV, sprintDetails.fovLerpTime * Time.deltaTime);
+
+            }
         }
     }
 }
@@ -428,6 +538,7 @@ public class FirstPersonDetails
 
     public float tiltStrengthMultiplier = 5f;
     public float camLerpTime = 5f;
+    public float cameraTilt = 0.2f;
 
 }
 
@@ -440,4 +551,28 @@ public class YAxisDetails
 
     public float bottomClamp;
     public float topClamp;
+}
+
+
+[System.Serializable]
+public class JumpDetails
+{
+    public bool canJump;
+    public float jumpHeight;
+    public bool isGrounded;
+
+    [Space(10)]
+
+    public Transform groudCheck;
+    public float groundDistance = .4f;
+    public LayerMask groundLayerMask;
+}
+
+[System.Serializable]
+public class SprintDetails
+{
+    public bool canSprint;
+    public float sprintMultiplier;
+    public float fovMultiplier;
+    public float fovLerpTime;
 }
